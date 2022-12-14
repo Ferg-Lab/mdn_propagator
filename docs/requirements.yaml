@@ -1,9 +1,11 @@
 name: docs
 channels:
+  - pytorch
 dependencies:
     # Base depends
   - python
   - pip
+  - pytorch=1.10
 
 
 
