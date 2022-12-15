@@ -11,6 +11,8 @@ dependencies:
 
   # package dependencies
   - pytorch
+  - pytorch-lightning
+  - scikit-learn
 
     # Testing
   - pytest

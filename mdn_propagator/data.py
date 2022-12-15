@@ -1,7 +1,9 @@
 """"Dataset for loading consequtive steps"""
 
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
+from pytorch_lightning import LightningDataModule
+from sklearn.preprocessing import MinMaxScaler
 
 from typing import Union
 
@@ -135,3 +137,73 @@ class KStepDataset(Dataset):
 
     def __len__(self):
         return len(self.ks[0])
+
+
+class DataModule(LightningDataModule):
+    """
+    Datamodule for the k-step dataset
+
+    Parameters
+    ----------
+    data : float tensor (single traj) or list of float tensors (multi traj); dim 0 = steps, dim 1 = features
+        time-continuous trajectories
+
+    lag : int
+        lag in steps to apply to data trajectory
+
+    ln_dynamical_weight : torch.tensor or list[torch.tensor] or None, default = None
+        accumulated sum of the log Girsanov path weights between frames in the trajectory;
+        Girsanov theorem measure of the probability of the observed sample path under a target potential
+        relative to that which was actually observed under the simulation potential;
+        identically unity (no reweighting rqd) for target potential == simulation potential and code as None
+
+    thermo_weight : torch.tensor or list[torch.tensor] or None, default = None
+        thermodynamic weights for each trajectory frame
+
+    k : int, default = 1
+        length of the markov process, i.e. k=1 means constructing time-lagged pairs, while k=2 means constructing
+        time-lagged triplets  
+
+    batch_size : int, default = 1000
+        training batch size
+
+    """
+    def __init__(self,
+                 data: Union[torch.Tensor, list],
+                 lag: int,
+                 ln_dynamical_weight: Union[torch.Tensor, list] = None,
+                 thermo_weight: Union[torch.Tensor, list] = None,
+                 k: int = 1,
+                 batch_size: int = 1000):
+        super().__init__()
+        self.data=data
+
+        # get scaler for data
+        self.scaler = self._get_scaler(self.data)
+
+        if isinstance(data, torch.Tensor):
+            data_scaled = torch.tensor(self.scaler.transform(self.data.numpy())).float()
+        elif isinstance(data, list):
+            data_scaled = [torch.tensor(self.scaler.transform(d.numpy())) for d in self.data]
+
+
+        self.dataset = KStepDataset(data=data_scaled, lag=lag, ln_dynamical_weight=ln_dynamical_weight, thermo_weight=thermo_weight, k=k)
+        self.batch_size = batch_size        
+    
+    def _get_scaler(self, data):
+        scaler = MinMaxScaler((0,1))
+        if isinstance(data, torch.Tensor):
+            scaler.fit(data.numpy())
+        elif isinstance(data, list):
+            scaler.fit(torch.cat(data, dim=0).numpy())
+        else:
+            raise TypeError(
+                "Data type %s is not supported; must be a float tensor (single traj) or list of float tensors (multi "
+                "traj)" % type(data)
+            )
+        return scaler
+
+
+        
+    def train_dataloader(self):
+        return DataLoader(dataset=self.dataset, batch_size=self.batch_size,shuffle=True)

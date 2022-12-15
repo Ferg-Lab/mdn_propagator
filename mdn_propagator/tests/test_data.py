@@ -1,6 +1,6 @@
 import torch
 
-from mdn_propagator.data import KStepDataset
+from mdn_propagator.data import KStepDataset, DataModule
 
 def test_KStepDataset():
     # default
@@ -73,3 +73,30 @@ def test_KStepDataset():
     assert torch.allclose(dataset[0][0][1],torch.tensor([3., 4.]))
     assert torch.allclose(dataset[0][0][2],torch.tensor([5., 6.]))
     assert torch.allclose(dataset[0][1],torch.tensor(1.))
+
+def test_DataModule():
+    # create dummy data
+    data = torch.randn(10000, 5)
+    lag = 1
+    ln_dynamical_weight = None
+    thermo_weight = None
+    k = 1
+
+    dm = DataModule(data=data, lag=lag, ln_dynamical_weight=ln_dynamical_weight, thermo_weight=thermo_weight, k=k)
+    for batch in dm.train_dataloader():
+        assert len(batch) == 2
+        assert len(batch[0]) == 2
+
+    # create dummy data
+    data = [torch.randn(10000, 5), torch.randn(10000, 5)]
+    lag = 1
+    ln_dynamical_weight = None
+    thermo_weight = None
+    k = 2
+
+    dm = DataModule(data=data, lag=lag, ln_dynamical_weight=ln_dynamical_weight, thermo_weight=thermo_weight, k=k)
+    for batch in dm.train_dataloader():
+        assert len(batch) == 2
+        assert len(batch[0]) == 3
+
+
