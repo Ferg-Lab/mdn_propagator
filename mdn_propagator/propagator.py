@@ -97,6 +97,8 @@ class Propagator(LightningModule):
 
         """
         datamodule = DataModule(data=data, lag=lag, ln_dynamical_weight=ln_dynamical_weight, thermo_weight=thermo_weight, k=k, batch_size=batch_size, **kwargs)
+        self._scaler = datamodule.scaler
+
         trainer = Trainer(auto_select_gpus=True, max_epochs=max_epochs, logger=False, enable_checkpointing=False, **kwargs)
 
         trainer.fit(self, datamodule)
