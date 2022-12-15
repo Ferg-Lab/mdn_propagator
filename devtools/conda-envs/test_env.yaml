@@ -9,11 +9,13 @@ dependencies:
   - python
   - pip
 
+  # package dependencies
+  - pytorch
+
     # Testing
   - pytest
   - pytest-cov
   - codecov
-  - pytorch
 
     # Pip-only installs
   #- pip:
