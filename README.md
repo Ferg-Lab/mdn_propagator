@@ -1,8 +1,8 @@
 MDN_Propagator
 ==============================
 [//]: # (Badges)
-[![GitHub Actions Build Status](https://github.com/REPLACE_WITH_OWNER_ACCOUNT/mdn_propagator/workflows/CI/badge.svg)](https://github.com/REPLACE_WITH_OWNER_ACCOUNT/mdn_propagator/actions?query=workflow%3ACI)
-[![codecov](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/MDN_Propagator/branch/main/graph/badge.svg)](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/MDN_Propagator/branch/main)
+[![GitHub Actions Build Status](https://github.com/Ferg-Lab/mdn_propagator/workflows/CI/badge.svg)](https://github.com/Ferg-Lab/mdn_propagator/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/Ferg-Lab/MDN_Propagator/branch/main/graph/badge.svg)](https://codecov.io/gh/Ferg-Lab/MDN_Propagator/branch/main)
 
 
 Mixture Density Networks for learning simulation propagators
