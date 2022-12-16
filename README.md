@@ -16,7 +16,8 @@ Installation
 To use mdn_propagator, you will need an environment with the following packages:
 
 * Python 3.7+
-* pytorch
+* PyTorch
+* NumPy
 * scikit-learn
 
 Once you have these packages installed, you can install molecool in the same environment using
@@ -29,9 +30,12 @@ Usage
 -------
 Once installed, you can use the package. This example generates a synthetic trajectory of Alanine Dipeptide (ADP) in the backbone dihedral space ($\phi$, $\psi$). More examples can be found in the `examples` directory. 
 
-from mdn_propagator.propagator import Propagator
 
 ```python
+from mdn_propagator.propagator import Propagator
+import torch
+import numpy as np
+
 # load data
 dihedrals_data = np.load('examples/data/alanine-dipeptide-3x250ns-backbone-dihedrals.npz')
 phi_psi_data = [dihedrals_data['arr_0'], dihedrals_data['arr_1'], dihedrals_data['arr_2']]
