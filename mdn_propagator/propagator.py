@@ -99,7 +99,7 @@ class Propagator(LightningModule):
             maximum number of epochs to train for
 
         **kwargs: 
-            additional keyword arguments to be passed to the the Lightning Trainer
+            additional keyword arguments to be passed to the the Lightning `Trainer`
 
         """
         datamodule = DataModule(data=data, lag=lag, ln_dynamical_weight=ln_dynamical_weight, thermo_weight=thermo_weight, k=k, batch_size=batch_size, **kwargs)
@@ -121,14 +121,22 @@ class Propagator(LightningModule):
         Parameters
         ----------
         x : torch.Tensor
-            sample(s) to be propagated with dimentionality [n, dim], where n = numebr of samples
-            to propagate and dim = dimentionality of the input
+            sample(s) to be propagated with dimentionality [n, k * dim], where
+            n is the number of samples to propagate, k = order of the markov process
+            and dim = dimentionality of the input
         """
 
         assert self.is_fit, 'model must be fit to data first using `fit`'
+        assert x.size(1) == self.hparams.k * self.hparams.dim, f'inconsistent dimensions, expecting {self.hparams.k} * {self.hparams.dim} dim'
+
+        n = x.size(0)
 
         self.eval()
-        x = torch.tensor(self._scaler.transform(x)).float()
+        if self.hparams.k == 1:
+            x = torch.tensor(self._scaler.transform(x)).float()
+        else:
+            x = torch.tensor(self._scaler.transform(x.reshape(n * self.hparams.k, -1))).reshape(n, -1).float()
+
         with torch.no_grad():
             x = self.mdn.sample(x).clip(0,1)
         x = self._scaler.inverse_transform(x)
@@ -141,23 +149,38 @@ class Propagator(LightningModule):
         Parameters
         ----------
         x_0 : torch.Tensor
-            starting point of the initial trajectory, with size [1, dim] 
+            starting point of the initial trajectory, with size [1, k * dim]
+            where k = the order of the Markov process and dim = the dimensionality
+            of the input data 
 
         n_steps : int
             number of steps in the synthetic trajectory
         """
 
         assert self.is_fit, 'model must be fit to data first using `fit`'
+        assert x_0.size(1) == self.hparams.k * self.hparams.dim, f'inconsistent dimensions, expecting {self.hparams.k} * {self.hparams.dim} dim'
 
         self.eval()
-        with torch.no_grad():
-            x = torch.tensor(self._scaler.transform(x_0)).float()
-            xs = list()
-            for _ in tqdm(range(int(n_steps))):
-                x = self.mdn.sample(x).clip(0, 1)
-                xs.append(x)
-        xs = torch.cat(xs)
-        xs = self._scaler.inverse_transform(xs)
+        if self.hparams.k == 1:
+            with torch.no_grad():
+                x = torch.tensor(self._scaler.transform(x_0)).float()
+                xs = list()
+                for _ in tqdm(range(int(n_steps))):
+                    x = self.mdn.sample(x).clip(0, 1)
+                    xs.append(x)
+            xs = torch.cat(xs)
+            xs = self._scaler.inverse_transform(xs)
+        elif self.hparams.k > 1:
+            x = torch.tensor(self._scaler.transform(x_0.reshape(self.hparams.k, -1))).reshape(1, -1).float()
+            with torch.no_grad():
+                xs = list()
+                for _ in tqdm(range(int(n_steps))):
+                    x_next = self.mdn.sample(x).clip(0, 1)
+                    xs.append(x_next)
+                    x = torch.cat((x[:, self.hparams.dim:], x_next), dim=-1)
+            xs = torch.cat(xs)
+            xs = self._scaler.inverse_transform(xs)
+
         return xs
         
 
