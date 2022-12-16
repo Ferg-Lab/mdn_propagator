@@ -7,6 +7,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 from typing import Union
 
+
 class KStepDataset(Dataset):
     """
     Custom dataset for Snrv class
@@ -31,7 +32,7 @@ class KStepDataset(Dataset):
 
     k : int, default = 1
         length of the markov process, i.e. k=1 means constructing time-lagged pairs, while k=2 means constructing
-        time-lagged triplets  
+        time-lagged triplets
 
     Attributes
     ----------
@@ -47,18 +48,20 @@ class KStepDataset(Dataset):
         if ln_pathweight == None => pathweight == ones
     """
 
-    def __init__(self,
-                 data: Union[torch.Tensor, list],
-                 lag: int,
-                 ln_dynamical_weight: Union[torch.Tensor, list] = None,
-                 thermo_weight: Union[torch.Tensor, list] = None,
-                 k: int = 1):
+    def __init__(
+        self,
+        data: Union[torch.Tensor, list],
+        lag: int,
+        ln_dynamical_weight: Union[torch.Tensor, list] = None,
+        thermo_weight: Union[torch.Tensor, list] = None,
+        k: int = 1,
+    ):
 
         self.lag = lag
         self.k = k
 
         if type(data) is list:
-            ks = {k_:list() for k_ in range(k + 1)}
+            ks = {k_: list() for k_ in range(k + 1)}
 
             for ii in range(0, len(data)):
                 assert type(data[ii]) is torch.Tensor
@@ -75,13 +78,13 @@ class KStepDataset(Dataset):
                         == ln_dynamical_weight[ii].size()[0]
                         == thermo_weight[ii].size()[0]
                     )
-            
+
             pathweight = list()
 
             for ii in range(len(data)):
                 for k_ in ks.keys():
                     start = k_ * self.lag
-                    end = - (k - k_) * self.lag if (k - k_) != 0 else None
+                    end = -(k - k_) * self.lag if (k - k_) != 0 else None
                     ks[k_].append(data[ii][start:end])
 
                 K = data[ii][k * self.lag :].size(0)
@@ -95,12 +98,12 @@ class KStepDataset(Dataset):
                 pathweight.append(pathweight_ii)
 
             pathweight = torch.cat(pathweight, dim=0)
-            ks = {k:torch.cat(v, dim=0) for k,v in ks.items()}
+            ks = {k: torch.cat(v, dim=0) for k, v in ks.items()}
 
         elif type(data) is torch.Tensor:
-            
+
             ks = dict()
-            
+
             if (ln_dynamical_weight is not None) and (thermo_weight is not None):
                 assert type(ln_dynamical_weight) is torch.Tensor
                 assert type(thermo_weight) is torch.Tensor
@@ -110,9 +113,9 @@ class KStepDataset(Dataset):
                     == thermo_weight.size()[0]
                 )
 
-            for k_ in range(k+1):
+            for k_ in range(k + 1):
                 start = k_ * self.lag
-                end = - (k - k_) * self.lag if (k - k_) != 0 else None
+                end = -(k - k_) * self.lag if (k - k_) != 0 else None
                 ks[k_] = data[start:end]
 
             K = ks[0].size(0)
@@ -162,21 +165,24 @@ class DataModule(LightningDataModule):
 
     k : int, default = 1
         length of the markov process, i.e. k=1 means constructing time-lagged pairs, while k=2 means constructing
-        time-lagged triplets  
+        time-lagged triplets
 
     batch_size : int, default = 1000
         training batch size
 
     """
-    def __init__(self,
-                 data: Union[torch.Tensor, list],
-                 lag: int,
-                 ln_dynamical_weight: Union[torch.Tensor, list] = None,
-                 thermo_weight: Union[torch.Tensor, list] = None,
-                 k: int = 1,
-                 batch_size: int = 1000):
+
+    def __init__(
+        self,
+        data: Union[torch.Tensor, list],
+        lag: int,
+        ln_dynamical_weight: Union[torch.Tensor, list] = None,
+        thermo_weight: Union[torch.Tensor, list] = None,
+        k: int = 1,
+        batch_size: int = 1000,
+    ):
         super().__init__()
-        self.data=data
+        self.data = data
 
         # get scaler for data
         self.scaler = self._get_scaler(self.data)
@@ -184,14 +190,21 @@ class DataModule(LightningDataModule):
         if isinstance(data, torch.Tensor):
             data_scaled = torch.tensor(self.scaler.transform(self.data.numpy())).float()
         elif isinstance(data, list):
-            data_scaled = [torch.tensor(self.scaler.transform(d.numpy())) for d in self.data]
+            data_scaled = [
+                torch.tensor(self.scaler.transform(d.numpy())) for d in self.data
+            ]
 
+        self.dataset = KStepDataset(
+            data=data_scaled,
+            lag=lag,
+            ln_dynamical_weight=ln_dynamical_weight,
+            thermo_weight=thermo_weight,
+            k=k,
+        )
+        self.batch_size = batch_size
 
-        self.dataset = KStepDataset(data=data_scaled, lag=lag, ln_dynamical_weight=ln_dynamical_weight, thermo_weight=thermo_weight, k=k)
-        self.batch_size = batch_size        
-    
     def _get_scaler(self, data):
-        scaler = MinMaxScaler((0,1))
+        scaler = MinMaxScaler((0, 1))
         if isinstance(data, torch.Tensor):
             scaler.fit(data.numpy())
         elif isinstance(data, list):
@@ -203,7 +216,7 @@ class DataModule(LightningDataModule):
             )
         return scaler
 
-
-        
     def train_dataloader(self):
-        return DataLoader(dataset=self.dataset, batch_size=self.batch_size,shuffle=True)
+        return DataLoader(
+            dataset=self.dataset, batch_size=self.batch_size, shuffle=True
+        )
