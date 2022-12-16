@@ -3,7 +3,7 @@
 import torch
 from pytorch_lightning import LightningModule, Trainer
 from typing import Union
-
+from tqdm.autonotebook import tqdm
 from mdn_propagator.mdn import MixtureDensityNetwork
 from mdn_propagator.data import DataModule
 
@@ -17,6 +17,10 @@ class Propagator(LightningModule):
     dim: int
         dimensionality data to learn the propagator over
 
+    k : int, default = 1
+        length of the markov process, i.e. k=1 means constructing time-lagged pairs, while k=2 means constructing
+        time-lagged triplets  
+
     n_components: int
         number of components in the mixture model.
 
@@ -29,10 +33,12 @@ class Propagator(LightningModule):
     **kwargs
         other keyword arguments passed to the `network_type` constructor
     """
-    def __init__(self, dim: int, n_components: int = 25, network_type: str = 'mlp', lr: float = 1e-3, **kwargs):
+    def __init__(self, dim: int, k: int = 1, n_components: int = 25, network_type: str = 'mlp', lr: float = 1e-3, **kwargs):
         super(Propagator, self).__init__()
         self.save_hyperparameters()
-        self.mdn = MixtureDensityNetwork(dim, dim, n_components, network_type=network_type, **kwargs)
+        self.mdn = MixtureDensityNetwork(k * dim, dim, n_components, network_type=network_type, **kwargs)
+
+        self.is_fit = False
     
     def forward(self, x):
         return self.mdn(x)
@@ -100,5 +106,58 @@ class Propagator(LightningModule):
         self._scaler = datamodule.scaler
 
         trainer = Trainer(auto_select_gpus=True, max_epochs=max_epochs, logger=False, enable_checkpointing=False, **kwargs)
-
         trainer.fit(self, datamodule)
+
+        self.is_fit = True
+        return self
+    
+    def propagate(self, x: torch.Tensor):
+        """
+        Propagates sample(s) using the fit model  
+        
+        Assumes sample is in original data space and uses scaler to transform input and 
+        inverse_transform the output
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            sample(s) to be propagated with dimentionality [n, dim], where n = numebr of samples
+            to propagate and dim = dimentionality of the input
+        """
+
+        assert self.is_fit, 'model must be fit to data first using `fit`'
+
+        self.eval()
+        x = torch.tensor(self._scaler.transform(x)).float()
+        with torch.no_grad():
+            x = self.mdn.sample(x).clip(0,1)
+        x = self._scaler.inverse_transform(x)
+        return x
+
+    def gen_synthetic_traj(self, x_0: torch.Tensor, n_steps: int):
+        """
+        Generates a synthetic trajectory from an initial starting point `x_0`
+
+        Parameters
+        ----------
+        x_0 : torch.Tensor
+            starting point of the initial trajectory, with size [1, dim] 
+
+        n_steps : int
+            number of steps in the synthetic trajectory
+        """
+
+        assert self.is_fit, 'model must be fit to data first using `fit`'
+
+        self.eval()
+        with torch.no_grad():
+            x = torch.tensor(self._scaler.transform(x_0)).float()
+            xs = list()
+            for _ in tqdm(range(int(n_steps))):
+                x = self.mdn.sample(x).clip(0, 1)
+                xs.append(x)
+        xs = torch.cat(xs)
+        xs = self._scaler.inverse_transform(xs)
+        return xs
+        
+
