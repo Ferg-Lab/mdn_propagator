@@ -14,7 +14,7 @@ def test_Propagator():
     k = 1
 
     propagator = Propagator(dim=data.size(1))
-    propagator.fit(data, lag, ln_dynamical_weight, thermo_weight, k, 10, 5)
+    propagator.fit(data, lag, ln_dynamical_weight, thermo_weight, 10, 5)
 
     n = 5
     x = data[:n]
@@ -32,7 +32,7 @@ def test_Propagator():
     k = 2
 
     propagator = Propagator(dim=data[0].size(1), k=k)
-    propagator.fit(data, lag, ln_dynamical_weight, thermo_weight, k, 10, 5)
+    propagator.fit(data, lag, ln_dynamical_weight, thermo_weight, 10, 5)
 
     n = 5
     x = torch.randn(n, k * 2)

@@ -6,6 +6,7 @@ from typing import Union
 from tqdm.autonotebook import tqdm
 from mdn_propagator.mdn import MixtureDensityNetwork
 from mdn_propagator.data import DataModule
+from mdn_propagator.utils import MinMaxScaler
 
 
 class Propagator(LightningModule):
@@ -49,6 +50,7 @@ class Propagator(LightningModule):
         self.mdn = MixtureDensityNetwork(
             k * dim, dim, n_components, network_type=network_type, **kwargs
         )
+        self._scaler = MinMaxScaler(dim)
 
         self.is_fit = False
 
@@ -77,7 +79,6 @@ class Propagator(LightningModule):
         lag: int,
         ln_dynamical_weight: Union[torch.Tensor, list] = None,
         thermo_weight: Union[torch.Tensor, list] = None,
-        k: int = 1,
         batch_size: int = 1000,
         max_epochs: int = 100,
         **kwargs,
@@ -102,10 +103,6 @@ class Propagator(LightningModule):
         thermo_weight : torch.tensor or list[torch.tensor] or None, default = None
             thermodynamic weights for each trajectory frame
 
-        k : int, default = 1
-            length of the markov process, i.e. k=1 means constructing time-lagged pairs, while k=2 means constructing
-            time-lagged triplets
-
         batch_size : int, default = 1000
             training batch size
 
@@ -121,20 +118,29 @@ class Propagator(LightningModule):
             lag=lag,
             ln_dynamical_weight=ln_dynamical_weight,
             thermo_weight=thermo_weight,
-            k=k,
+            k=self.hparams.k,
             batch_size=batch_size,
             **kwargs,
         )
+        if self.is_fit:
+            raise Warning(
+                """The `fit` method was called more than once on the same `Propagator` instance,
+                recreating data scaler on dataset from the most recent `fit` invocation. This warning
+                can be safely ignored if the `Propagator` is being fit on the same data"""
+            )
         self._scaler = datamodule.scaler
 
-        trainer = Trainer(
-            auto_select_gpus=True,
-            max_epochs=max_epochs,
-            logger=False,
-            enable_checkpointing=False,
-            **kwargs,
-        )
-        trainer.fit(self, datamodule)
+        if self._trainer is None:
+            trainer = Trainer(
+                auto_select_gpus=True,
+                max_epochs=max_epochs,
+                logger=False,
+                enable_checkpointing=False,
+                **kwargs,
+            )
+            trainer.fit(self, datamodule)
+        else:
+            self.trainer.fit(self, datamodule)
 
         self.is_fit = True
         return self
@@ -163,10 +169,10 @@ class Propagator(LightningModule):
 
         self.eval()
         if self.hparams.k == 1:
-            x = torch.tensor(self._scaler.transform(x)).float()
+            x = self._scaler.transform(x).float()
         else:
             x = (
-                torch.tensor(self._scaler.transform(x.reshape(n * self.hparams.k, -1)))
+                self._scaler.transform(x.reshape(n * self.hparams.k, -1))
                 .reshape(n, -1)
                 .float()
             )
@@ -199,7 +205,7 @@ class Propagator(LightningModule):
         self.eval()
         if self.hparams.k == 1:
             with torch.no_grad():
-                x = torch.tensor(self._scaler.transform(x_0)).float()
+                x = self._scaler.transform(x_0).float()
                 xs = list()
                 for _ in tqdm(range(int(n_steps))):
                     x = self.mdn.sample(x).clip(0, 1)
@@ -208,7 +214,7 @@ class Propagator(LightningModule):
             xs = self._scaler.inverse_transform(xs)
         elif self.hparams.k > 1:
             x = (
-                torch.tensor(self._scaler.transform(x_0.reshape(self.hparams.k, -1)))
+                self._scaler.transform(x_0.reshape(self.hparams.k, -1))
                 .reshape(1, -1)
                 .float()
             )
@@ -222,3 +228,18 @@ class Propagator(LightningModule):
             xs = self._scaler.inverse_transform(xs)
 
         return xs
+    
+    def save(self, fname: str):
+        """
+        Generates a synthetic trajectory from an initial starting point `x_0`
+
+        Parameters
+        ----------
+        fname : str
+            file name for saving a model checkpoint
+        """
+
+        assert self.is_fit, "model must be fit to data first using `fit`"
+
+        self.model.trainer.save_checkpoint(fname)
+        

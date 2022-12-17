@@ -17,8 +17,8 @@ To use mdn_propagator, you will need an environment with the following packages:
 
 * Python 3.7+
 * PyTorch
-* NumPy
-* scikit-learn
+* PyTorch Lightning
+* NumPy (for running the examples)
 
 Once you have these packages installed, you can install molecool in the same environment using
 
@@ -51,6 +51,12 @@ model.fit(phi_psi_data, lag = 1, max_epochs=100)
 n_steps = int(1E6)
 x = phi_psi_data[0][0][None]
 syn_traj = model.gen_synthetic_traj(x, n_steps)
+
+# Save model checkpoint
+model.save('ADP.ckpt')
+
+# Load checkpoint
+model = Propagator.load_from_checkpoint('ADP.ckpt')
 ```
 
 

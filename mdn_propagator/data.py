@@ -3,7 +3,7 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 from pytorch_lightning import LightningDataModule
-from sklearn.preprocessing import MinMaxScaler
+from mdn_propagator.utils import MinMaxScaler
 
 from typing import Union
 
@@ -188,10 +188,10 @@ class DataModule(LightningDataModule):
         self.scaler = self._get_scaler(self.data)
 
         if isinstance(data, torch.Tensor):
-            data_scaled = torch.tensor(self.scaler.transform(self.data.numpy())).float()
+            data_scaled = self.scaler.transform(self.data).float()
         elif isinstance(data, list):
             data_scaled = [
-                torch.tensor(self.scaler.transform(d.numpy())) for d in self.data
+                self.scaler.transform(d).float() for d in self.data
             ]
 
         self.dataset = KStepDataset(
@@ -204,11 +204,15 @@ class DataModule(LightningDataModule):
         self.batch_size = batch_size
 
     def _get_scaler(self, data):
-        scaler = MinMaxScaler((0, 1))
+        
         if isinstance(data, torch.Tensor):
-            scaler.fit(data.numpy())
+            d = data.size(1)
+            scaler = MinMaxScaler(d)
+            scaler.fit(data)
         elif isinstance(data, list):
-            scaler.fit(torch.cat(data, dim=0).numpy())
+            d = data[0].size(1)
+            scaler = MinMaxScaler(d)
+            scaler.fit(torch.cat(data, dim=0))
         else:
             raise TypeError(
                 "Data type %s is not supported; must be a float tensor (single traj) or list of float tensors (multi "
