@@ -1,11 +1,11 @@
-MDN_Propagator
+Mixture Density Networks 
 ==============================
 [//]: # (Badges)
 [![GitHub Actions Build Status](https://github.com/Ferg-Lab/mdn_propagator/workflows/CI/badge.svg)](https://github.com/Ferg-Lab/mdn_propagator/actions?query=workflow%3ACI)
 <!-- [![codecov](https://codecov.io/gh/Ferg-Lab/MDN_Propagator/branch/main/graph/badge.svg)](https://codecov.io/gh/Ferg-Lab/MDN_Propagator/branch/main) -->
 
 
-Mixture Density Networks for learning simulation propagators
+This package impliments Mixture Density Networks (MDNs) for learning simulation propagators. Given a trajectory $X=\{x_0, x_1, x_2, \cdots \, x_N}$ where $x_i \in {\rm I\!R}^d$ we learn a propagator $f_{\theta}(x_i)$ as a MDN that predicts the system state after a lag time $\tau$ $$f_{\theta}(x_i) = \hat{x}_{i+\tau}$$ 
 
 Getting Started
 ===============
@@ -16,9 +16,13 @@ Installation
 To use mdn_propagator, you will need an environment with the following packages:
 
 * Python 3.7+
-* PyTorch
-* PyTorch Lightning
-* NumPy (for running the examples)
+* [PyTorch](https://pytorch.org/get-started/locally/)
+* [PyTorch Lightning](https://www.pytorchlightning.ai/)
+
+For running and plotting examples:
+* [NumPy](https://numpy.org/install/)
+* [Matplotlib](https://matplotlib.org/stable/users/getting_started/)
+* [PyEMMA](http://www.emma-project.org/latest/INSTALL.html)
 
 Once you have these packages installed, you can install molecool in the same environment using
 
@@ -28,7 +32,7 @@ $ pip install -e .
 
 Usage
 -------
-Once installed, you can use the package. This example generates a synthetic trajectory of Alanine Dipeptide (ADP) in the backbone dihedral space ($\phi$, $\psi$). More examples can be found in the `examples` directory. 
+Once installed, you can use the package. This example generates a synthetic trajectory of Alanine Dipeptide (ADP) in the space of the backbone dihedral angles ($\phi , \psi$). More detailed examples can be found in the `examples` directory. 
 
 
 ```python
@@ -55,8 +59,18 @@ syn_traj = model.gen_synthetic_traj(x, n_steps)
 # Save model checkpoint
 model.save('ADP.ckpt')
 
-# Load checkpoint
+# Load from checkpoint
 model = Propagator.load_from_checkpoint('ADP.ckpt')
+```
+
+The defulat network used for the propagator is a simple MLP. Network hyperparameters can be defined in the `Propagator` constructor, also see [modules](mdn_propagator/modules.py) for more details:
+
+
+```python
+from mdn_propagator.propagator import Propagator
+from torch import nn
+
+model = Propagator(dim = 10, hidden_dim = 256, n_hidden_layers = 2, activation = nn.ReLU, lr = 1e-4)
 ```
 
 

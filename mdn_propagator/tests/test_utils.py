@@ -8,7 +8,7 @@ from mdn_propagator.utils import MinMaxScaler
 def test_min_max_scaler():
     # create some random data
     d = 5
-    X = torch.randn(10, d)
+    X = torch.randn(100, d)
 
     # create a scaler and fit it to the data
     scaler = MinMaxScaler(d)
@@ -23,7 +23,7 @@ def test_min_max_scaler():
 
     # inverse transform the data and check that it is equal to the original data
     X_inv = scaler.inverse_transform(X_scaled)
-    assert torch.allclose(X, X_inv)
+    assert torch.allclose(X, X_inv, rtol=1e-4, atol=1e-5)
 
     # test that the scaler raises an error if it hasn't been fit yet
     with pytest.raises(ValueError):

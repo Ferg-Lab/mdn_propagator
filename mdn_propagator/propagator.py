@@ -130,17 +130,17 @@ class Propagator(LightningModule):
             )
         self._scaler = datamodule.scaler
 
-        if self._trainer is None:
-            trainer = Trainer(
+        if not hasattr(self, 'trainer_'):
+            self.trainer_ = Trainer(
                 auto_select_gpus=True,
                 max_epochs=max_epochs,
                 logger=False,
                 enable_checkpointing=False,
                 **kwargs,
             )
-            trainer.fit(self, datamodule)
+            self.trainer_.fit(self, datamodule)
         else:
-            self.trainer.fit(self, datamodule)
+            self.trainer_.fit(self, datamodule)
 
         self.is_fit = True
         return self
@@ -241,5 +241,5 @@ class Propagator(LightningModule):
 
         assert self.is_fit, "model must be fit to data first using `fit`"
 
-        self.trainer.save_checkpoint(fname)
+        self.trainer_.save_checkpoint(fname)
         
