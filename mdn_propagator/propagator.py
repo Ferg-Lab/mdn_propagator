@@ -241,5 +241,5 @@ class Propagator(LightningModule):
 
         assert self.is_fit, "model must be fit to data first using `fit`"
 
-        self.model.trainer.save_checkpoint(fname)
+        self.trainer.save_checkpoint(fname)
         
