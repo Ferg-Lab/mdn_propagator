@@ -5,7 +5,7 @@ Mixture Density Networks
 <!-- [![codecov](https://codecov.io/gh/Ferg-Lab/MDN_Propagator/branch/main/graph/badge.svg)](https://codecov.io/gh/Ferg-Lab/MDN_Propagator/branch/main) -->
 
 
-This package impliments Mixture Density Networks (MDNs) for learning simulation propagators. Given a trajectory $X=\{x_0, x_1, x_2, \cdots \, x_N}$ where $x_i \in {\rm I\!R}^d$ we learn a propagator $f_{\theta}(x_i)$ as a MDN that predicts the system state after a lag time $\tau$ $$f_{\theta}(x_i) = \hat{x}_{i+\tau}$$ 
+This package impliments Mixture Density Networks (MDNs) for learning simulation propagators. Given a trajectory $X=\{x_0, x_1, x_2, \cdots \, x_N}$ where $x_i \in \mathbb{R}^d$ we learn a propagator $f_{\theta}(x_i)$ as a MDN that predicts the system state after a lag time $\tau$ $$f_{\theta}(x_i) = \hat{x}_{i+\tau}$$ 
 
 Getting Started
 ===============
@@ -13,7 +13,7 @@ Getting Started
 
 Installation
 ------------
-To use mdn_propagator, you will need an environment with the following packages:
+To use `mdn_propagator`, you will need an environment with the following packages:
 
 * Python 3.7+
 * [PyTorch](https://pytorch.org/get-started/locally/)
