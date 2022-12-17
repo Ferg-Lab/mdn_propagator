@@ -62,6 +62,9 @@ model.save('ADP.ckpt')
 # Load from checkpoint
 model = Propagator.load_from_checkpoint('ADP.ckpt')
 ```
+![image](https://user-images.githubusercontent.com/40403472/208270555-e606079f-adf9-49f5-ae36-40b489b8fa35.png)
+
+
 
 The defulat network used for the propagator is a simple MLP. Network hyperparameters can be defined in the `Propagator` constructor, also see [modules](mdn_propagator/modules.py) for more details:
 
