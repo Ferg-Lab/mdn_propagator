@@ -5,7 +5,7 @@ Mixture Density Networks
 <!-- [![codecov](https://codecov.io/gh/Ferg-Lab/MDN_Propagator/branch/main/graph/badge.svg)](https://codecov.io/gh/Ferg-Lab/MDN_Propagator/branch/main) -->
 
 
-This package impliments Mixture Density Networks (MDNs) for learning simulation propagators. Given a trajectory $X=\{x_0, x_1, x_2, \cdots \, x_N}$ where $x_i \in \mathbb{R}^d$ we learn a propagator $f_{\theta}(x_i)$ as a MDN that predicts the system state after a lag time $\tau$ $$f_{\theta}(x_i) = \hat{x}_{i+\tau}$$ 
+This package impliments Mixture Density Networks (MDNs) for learning simulation propagators. Given a trajectory $X=\{x_0, x_1, x_2, \cdots \, x_N}$ where $x_t \in \mathbb{R}^d$ we learn a propagator $f_{\theta}(x_t)$ as a MDN that predicts the system state $\hae{x}_{t+\tau}$ after a lag time $\tau$ $$f_{\theta}(x_t) = \hat{x}_{t+\tau}$$ 
 
 Getting Started
 ===============

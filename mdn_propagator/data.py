@@ -10,7 +10,7 @@ from typing import Union
 
 class KStepDataset(Dataset):
     """
-    Custom dataset for Snrv class
+    Dataset class for preparing time-lagged separated features from trajectories
 
 
     Parameters
@@ -190,9 +190,7 @@ class DataModule(LightningDataModule):
         if isinstance(data, torch.Tensor):
             data_scaled = self.scaler.transform(self.data).float()
         elif isinstance(data, list):
-            data_scaled = [
-                self.scaler.transform(d).float() for d in self.data
-            ]
+            data_scaled = [self.scaler.transform(d).float() for d in self.data]
 
         self.dataset = KStepDataset(
             data=data_scaled,
@@ -204,7 +202,7 @@ class DataModule(LightningDataModule):
         self.batch_size = batch_size
 
     def _get_scaler(self, data):
-        
+
         if isinstance(data, torch.Tensor):
             d = data.size(1)
             scaler = MinMaxScaler(d)
