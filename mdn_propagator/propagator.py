@@ -84,7 +84,7 @@ class Propagator(LightningModule):
         **kwargs,
     ):
         """
-        Datamodule for the k-step dataset
+        Fit the propagator on provided data
 
         Parameters
         ----------
