@@ -24,7 +24,7 @@ For running and plotting examples:
 * [Matplotlib](https://matplotlib.org/stable/users/getting_started/)
 * [PyEMMA](http://www.emma-project.org/latest/INSTALL.html)
 
-Once you have these packages installed, you can install molecool in the same environment using
+Once you have these packages installed, you can install `mdn_propagator` in the same environment using
 
 ```
 $ pip install -e .
