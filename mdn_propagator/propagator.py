@@ -130,9 +130,10 @@ class Propagator(LightningModule):
             )
         self._scaler = datamodule.scaler
 
-        if not hasattr(self, 'trainer_'):
+        if not hasattr(self, "trainer_"):
             self.trainer_ = Trainer(
-                auto_select_gpus=True,
+                devices=1,
+                accelerator="gpu" if torch.cuda.is_available() else "cpu",
                 max_epochs=max_epochs,
                 logger=False,
                 enable_checkpointing=False,
@@ -228,7 +229,7 @@ class Propagator(LightningModule):
             xs = self._scaler.inverse_transform(xs)
 
         return xs
-    
+
     def save(self, fname: str):
         """
         Generates a synthetic trajectory from an initial starting point `x_0`
@@ -242,4 +243,3 @@ class Propagator(LightningModule):
         assert self.is_fit, "model must be fit to data first using `fit`"
 
         self.trainer_.save_checkpoint(fname)
-        
