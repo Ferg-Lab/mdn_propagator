@@ -5,7 +5,7 @@ Mixture Density Networks
 <!-- [![codecov](https://codecov.io/gh/Ferg-Lab/MDN_Propagator/branch/main/graph/badge.svg)](https://codecov.io/gh/Ferg-Lab/MDN_Propagator/branch/main) -->
 
 
-This package impliments Mixture Density Networks (MDNs) for learning simulation propagators. Given a trajectory $X=\{x_0, x_1, x_2, \cdots \, x_N}$ where $x_t \in \mathbb{R}^d$ we learn a propagator $f_{\theta}(x_t)$ as a MDN that predicts the system state $\hae{x}_{t+\tau}$ after a lag time $\tau$ $$f_{\theta}(x_t) = \hat{x}_{t+\tau}$$ 
+This package impliments Mixture Density Networks (MDNs) for learning simulation propagators. Given a trajectory $X=\{x_0, x_1, x_2, \cdots \, x_N}$ where $x_t \in \mathbb{R}^d$ we learn a propagator $f_{\theta}(x_t)$ as a MDN that predicts the system state $\hat{x}\_{t+\tau}$ after a lag time $\tau$ $$f_{\theta}(x_t) = \hat{x}_{t+\tau}$$ 
 
 Getting Started
 ===============
@@ -24,7 +24,7 @@ For running and plotting examples:
 * [Matplotlib](https://matplotlib.org/stable/users/getting_started/)
 * [PyEMMA](http://www.emma-project.org/latest/INSTALL.html)
 
-Once you have these packages installed, you can install molecool in the same environment using
+Once you have these packages installed, you can install `mdn_propagator` in the same environment using
 
 ```
 $ pip install -e .
