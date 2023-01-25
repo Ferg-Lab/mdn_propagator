@@ -122,6 +122,7 @@ class Propagator(LightningModule):
             additional keyword arguments to be passed to the the Lightning `Trainer` and/or the `DataModule`
 
         """
+        kwargs.get("enable_checkpointing", False)
         datamodule = DataModule(
             data=data,
             lag=lag,
@@ -151,7 +152,6 @@ class Propagator(LightningModule):
                     name="mdn_propagator_logs",
                     version=None if not isinstance(log, str) else log,
                 ),
-                enable_checkpointing=False,
                 **kwargs,
             )
             self.trainer_.fit(self, datamodule)
