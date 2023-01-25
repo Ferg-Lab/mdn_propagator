@@ -180,6 +180,7 @@ class DataModule(LightningDataModule):
         thermo_weight: Union[torch.Tensor, list] = None,
         k: int = 1,
         batch_size: int = 1000,
+        **kwargs
     ):
         super().__init__()
         self.data = data

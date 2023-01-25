@@ -2,6 +2,7 @@
 
 import torch
 from pytorch_lightning import LightningModule, Trainer
+from pytorch_lightning.loggers import CSVLogger
 from typing import Union
 from tqdm.autonotebook import tqdm
 from mdn_propagator.mdn import MixtureDensityNetwork
@@ -67,6 +68,7 @@ class Propagator(LightningModule):
 
         loss = self.mdn.loss(x, y)
         loss = (pathweights * loss).mean()
+        self.log("loss", loss)
         return loss
 
     def configure_optimizers(self):
@@ -81,6 +83,7 @@ class Propagator(LightningModule):
         thermo_weight: Union[torch.Tensor, list] = None,
         batch_size: int = 1000,
         max_epochs: int = 100,
+        log: Union[str, bool] = False,
         **kwargs,
     ):
         """
@@ -109,8 +112,14 @@ class Propagator(LightningModule):
         max_epochs : int, default = 100
             maximum number of epochs to train for
 
+        log : str or bool, default = False
+            if the results of the training should be logged. If True logs are by default saved in CSV format
+            to the directory `./mdn_propagator_logs/version_x/`, where `x` increments based on what has been
+            logged already. If a string is passed the saving directory is created based on the provided name
+            `./mdn_propagator_logs/{log}/`.
+
         **kwargs:
-            additional keyword arguments to be passed to the the Lightning `Trainer`
+            additional keyword arguments to be passed to the the Lightning `Trainer` and/or the `DataModule`
 
         """
         datamodule = DataModule(
@@ -135,7 +144,13 @@ class Propagator(LightningModule):
                 devices=1,
                 accelerator="gpu" if torch.cuda.is_available() else "cpu",
                 max_epochs=max_epochs,
-                logger=False,
+                logger=False
+                if log is False
+                else CSVLogger(
+                    save_dir="./",
+                    name="mdn_propagator_logs",
+                    version=None if not isinstance(log, str) else log,
+                ),
                 enable_checkpointing=False,
                 **kwargs,
             )
